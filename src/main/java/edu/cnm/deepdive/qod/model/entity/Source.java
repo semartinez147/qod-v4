@@ -1,12 +1,18 @@
 package edu.cnm.deepdive.qod.model.entity;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.ManyToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -47,6 +53,11 @@ public class Source {
   @Column(length = 1024, nullable = false, unique = true)
   private String name;
 
+  @ManyToMany(fetch = FetchType.LAZY, mappedBy = "sources",
+      cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+  @OrderBy("text ASC")
+  private Set<Quote> quotes = new LinkedHashSet<>();
+
   @NonNull
   public UUID getId() {
     return id;
@@ -69,6 +80,10 @@ public class Source {
 
   public void setName(@NonNull String name) {
     this.name = name;
+  }
+
+  public Set<Quote> getQuotes() {
+    return quotes;
   }
 
 }

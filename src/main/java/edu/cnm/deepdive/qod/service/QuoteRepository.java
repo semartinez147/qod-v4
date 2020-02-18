@@ -8,4 +8,6 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
 
   Iterable<Quote> getAllByOrderByCreatedDesc();
 
+  Iterable<Quote> getAllByTextContainsOrderByTextAsc(String fragment);
+
 }

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>All Quotes</title>
+  </head>
+
+  <body>
+
+    <ul>
+      <li th:each="quote: ${quotes}">
+        <p>&ldquo;<span th:text="${quote.text}"></span>&rdquo;</p>
+        <p>Source: <span th:text="${quote?.source?.name} ?: '(Unknown)'"></span></p>
+      </li>
+    </ul>
+
+  </body>
+
+</html>

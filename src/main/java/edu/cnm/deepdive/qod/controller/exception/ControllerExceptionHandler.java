@@ -19,7 +19,7 @@ public class ControllerExceptionHandler {
   public void notFound() {}
 
   @ExceptionHandler(IllegalArgumentException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Invalid request content or parameters")
   public void badRequest() {}
 
 }

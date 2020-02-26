@@ -68,13 +68,13 @@ public class QuoteController {
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote get(@PathVariable UUID id) {
-    return quoteRepository.findById(id).get();
+    return quoteRepository.findOrFail(id);
   }
 
   @PutMapping(value = "/{id}",
       consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote put(@PathVariable UUID id, @RequestBody Quote modifiedQuote) {
-    Quote quote = get(id);
+    Quote quote = quoteRepository.findOrFail(id);
     quote.setText(modifiedQuote.getText());
     return quoteRepository.save(quote);
   }
@@ -82,7 +82,7 @@ public class QuoteController {
   @PutMapping(value = "/{id}/text",
       consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
   public String put(@PathVariable UUID id, @RequestBody String modifiedQuote) {
-    Quote quote = get(id);
+    Quote quote = quoteRepository.findOrFail(id);
     quote.setText(modifiedQuote);
     quoteRepository.save(quote);
     return quote.getText();
@@ -91,16 +91,25 @@ public class QuoteController {
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable UUID id) {
-    // Code below throws NoSuchElementException if id is not in database.
-//    Quote quote = get(id);
-//    quoteRepository.delete(quote);
     quoteRepository.findById(id).ifPresent(quoteRepository::delete);
   }
 
   @PutMapping(value = "/{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote attach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
-    Quote quote = get(quoteId);
-    Source source = sourceRepository.findById(sourceId).get();
+    Quote quote = quoteRepository.findOrFail(quoteId);
+    Source source = sourceRepository.findOrFail(sourceId);
+    if (!source.equals(quote.getSource())) {
+      quote.setSource(source);
+      quoteRepository.save(quote);
+    }
+    return quote;
+  }
+
+  @PutMapping(value = "/{quoteId}/source",
+      consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public Quote attach(@PathVariable UUID quoteId, @RequestBody Source source) {
+    Quote quote = quoteRepository.findOrFail(quoteId);
+    source = sourceRepository.findOrFail(source.getId());
     if (!source.equals(quote.getSource())) {
       quote.setSource(source);
       quoteRepository.save(quote);
@@ -110,8 +119,8 @@ public class QuoteController {
 
   @DeleteMapping(value = "/{quoteId}/source/{sourceId}")
   public Quote detach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
-    Quote quote = get(quoteId);
-    Source source = sourceRepository.findById(sourceId).get();
+    Quote quote = quoteRepository.findOrFail(quoteId);
+    Source source = sourceRepository.findOrFail(sourceId);
     if (source.equals(quote.getSource())) {
       quote.setSource(null);
       quoteRepository.save(quote);
@@ -121,7 +130,7 @@ public class QuoteController {
 
   @DeleteMapping(value = "/{quoteId}/source")
   public Quote clearSource(@PathVariable UUID quoteId) {
-    Quote quote = get(quoteId);
+    Quote quote = quoteRepository.findOrFail(quoteId);
     quote.setSource(null);
     return quoteRepository.save(quote);
   }

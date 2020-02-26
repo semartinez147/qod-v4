@@ -11,4 +11,8 @@ public interface SourceRepository extends JpaRepository<Source, UUID> {
 
   Iterable<Source> getAllByNameContainsOrderByNameAsc(String fragment);
 
+  default Source findOrFail(UUID id) {
+    return findById(id).get();
+  }
+
 }

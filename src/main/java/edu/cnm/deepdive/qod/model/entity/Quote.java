@@ -29,6 +29,7 @@ import org.springframework.hateoas.server.EntityLinks;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+@SuppressWarnings("JpaDataSourceORMInspection")
 @Component
 @Entity
 @Table(

@@ -1,3 +1,5 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 create table quote
 (
     quote_id  CHAR(16) FOR BIT DATA not null,

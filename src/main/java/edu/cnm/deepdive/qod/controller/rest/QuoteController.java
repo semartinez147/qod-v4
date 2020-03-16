@@ -39,6 +39,14 @@ public class QuoteController {
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Quote> post(@RequestBody Quote quote) {
+    Source source = quote.getSource();
+    if (source != null) {
+      UUID id = source.getId();
+      if (id != null) {
+        source = sourceRepository.findOrFail(id);
+        quote.setSource(source);
+      }
+    }
     quoteRepository.save(quote);
     return ResponseEntity.created(quote.getHref()).body(quote);
   }

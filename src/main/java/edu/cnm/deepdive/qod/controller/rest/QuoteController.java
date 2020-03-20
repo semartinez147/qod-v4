@@ -5,6 +5,7 @@ import edu.cnm.deepdive.qod.model.entity.Quote;
 import edu.cnm.deepdive.qod.model.entity.Source;
 import edu.cnm.deepdive.qod.service.QuoteRepository;
 import edu.cnm.deepdive.qod.service.SourceRepository;
+import java.util.Date;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.ExposesResourceFor;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/quotes")
 @ExposesResourceFor(Quote.class)
 public class QuoteController {
+
+  private static final long MILLISECONDS_PER_DAY = 1000L * 60 * 60 * 24;
 
   private final QuoteRepository quoteRepository;
   private final SourceRepository sourceRepository;
@@ -53,7 +56,7 @@ public class QuoteController {
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public Iterable<Quote> get() {
-    return quoteRepository.getAllByOrderByCreatedDesc();
+    return quoteRepository.getAllByOrderByTextAsc();
   }
 
   @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -69,9 +72,10 @@ public class QuoteController {
     return quoteRepository.getRandom().get();
   }
 
-  @GetMapping(value = "/random", produces = MediaType.TEXT_PLAIN_VALUE)
-  public String getRandomPlain() {
-    return getRandom().getText();
+  @GetMapping(value = "/qod", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Quote getQuoteOfDay() {
+    long dayOffset = (new Date().getTime() / MILLISECONDS_PER_DAY) % quoteRepository.getCount();
+    return quoteRepository.getQuoteOfDay(dayOffset).get();
   }
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -5,9 +5,11 @@ import edu.cnm.deepdive.qod.model.entity.Quote;
 import edu.cnm.deepdive.qod.model.entity.Source;
 import edu.cnm.deepdive.qod.service.QuoteRepository;
 import edu.cnm.deepdive.qod.service.SourceRepository;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -73,8 +75,9 @@ public class QuoteController {
   }
 
   @GetMapping(value = "/qod", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote getQuoteOfDay() {
-    long dayOffset = (new Date().getTime() / MILLISECONDS_PER_DAY) % quoteRepository.getCount();
+  public Quote getQuoteOfDay(
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    long dayOffset = date.toEpochDay() % quoteRepository.getCount();
     return quoteRepository.getQuoteOfDay(dayOffset).get();
   }
 

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-  Optional<User> findByOauthKey(String oauthKey);
+  Optional<User> findFirstByOauthKey(String oauthKey);
 
   Iterable<User> getAllByRoleOrderByDisplayNameAsc(Role role);
 }

@@ -6,6 +6,7 @@ import edu.cnm.deepdive.qod.view.FlatUser;
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -59,11 +60,13 @@ public class User implements FlatUser {
   @NotBlank
   private String displayName;
 
+  @NonNull
   @Enumerated(value = EnumType.ORDINAL)
-  private Role role;
+  private Role role = Role.USER;
 
   @JsonIgnore
   @NonNull
+  @Column(nullable = false, updatable = false, unique = true)
   private String oauthKey;
 
   @Override

@@ -102,7 +102,7 @@ public class QuoteController {
 
   @PutMapping(value = "/{quoteId}/source",
       consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Source> putAttribution(@PathVariable UUID quoteId, @RequestBody Source source) {
+  public ResponseEntity<Source> putAttribution(@PathVariable UUID quoteId, @RequestBody @Valid Source source) {
     return ResponseEntity.of(quoteService.update(quoteId, source));
   }
 

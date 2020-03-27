@@ -15,6 +15,7 @@ public interface FlatSource {
 
   Date getUpdated();
 
+  @NonNull
   String getName();
 
   URI getHref();

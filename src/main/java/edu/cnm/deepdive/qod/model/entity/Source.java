@@ -1,5 +1,8 @@
 package edu.cnm.deepdive.qod.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import edu.cnm.deepdive.qod.view.FlatQuote;
 import edu.cnm.deepdive.qod.view.FlatSource;
@@ -22,6 +25,7 @@ import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.NotBlank;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -37,6 +41,11 @@ import org.springframework.stereotype.Component;
     indexes = {
         @Index(columnList = "created")
     }
+)
+@JsonIgnoreProperties(
+    value = {"created", "updated", "quotes", "href"},
+    allowGetters = true,
+    ignoreUnknown = true
 )
 public class Source implements FlatSource {
 
@@ -59,6 +68,8 @@ public class Source implements FlatSource {
   @Column(nullable = false)
   private Date updated;
 
+  @NonNull
+  @NotBlank
   @Column(length = 1024, nullable = false, unique = true)
   private String name;
 
@@ -84,6 +95,7 @@ public class Source implements FlatSource {
     return updated;
   }
 
+  @NonNull
   @Override
   public String getName() {
     return name;
@@ -119,6 +131,7 @@ public class Source implements FlatSource {
     return result;
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @PostConstruct
   private void init() {
     entityLinks.toString();

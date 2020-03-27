@@ -9,19 +9,15 @@ import org.springframework.lang.NonNull;
 @JsonPropertyOrder({"id", "created", "updated", "text", "href"})
 public interface FlatQuote {
 
-  @NonNull
   UUID getId();
 
-  @NonNull
   Date getCreated();
 
-  @NonNull
   Date getUpdated();
 
   @NonNull
   String getText();
 
-  @NonNull
   URI getHref();
 
 }

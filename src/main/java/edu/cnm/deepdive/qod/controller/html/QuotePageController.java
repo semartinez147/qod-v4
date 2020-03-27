@@ -1,6 +1,6 @@
 package edu.cnm.deepdive.qod.controller.html;
 
-import edu.cnm.deepdive.qod.service.QuoteRepository;
+import edu.cnm.deepdive.qod.model.repository.QuoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;

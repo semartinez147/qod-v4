@@ -1,4 +1,4 @@
-package edu.cnm.deepdive.qod.service;
+package edu.cnm.deepdive.qod.model.repository;
 
 import edu.cnm.deepdive.qod.model.entity.Quote;
 import edu.cnm.deepdive.qod.model.entity.Source;
@@ -19,16 +19,9 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
       nativeQuery = true)
   Optional<Quote> getRandom();
 
-  @Query(value = "SELECT COUNT(*) FROM sa.Quote", nativeQuery = true)
+  @Query(value = "SELECT COUNT(q) FROM Quote AS q")
   long getCount();
 
-  @Query(value = "SELECT * FROM sa.Quote OFFSET ?1 ROWS FETCH NEXT ROW ONLY", nativeQuery = true)
-  Optional<Quote> getQuoteOfDay(long dayOffset);
-
   Iterable<Quote> getAllBySourceOrderByTextAsc(Source source);
-
-  default Quote findOrFail(UUID id) {
-    return findById(id).get();
-  }
 
 }

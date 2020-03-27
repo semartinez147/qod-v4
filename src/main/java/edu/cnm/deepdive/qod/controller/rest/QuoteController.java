@@ -1,19 +1,20 @@
 package edu.cnm.deepdive.qod.controller.rest;
 
-import edu.cnm.deepdive.qod.controller.exception.SearchTermTooShortException;
 import edu.cnm.deepdive.qod.model.entity.Quote;
 import edu.cnm.deepdive.qod.model.entity.Source;
-import edu.cnm.deepdive.qod.service.QuoteRepository;
-import edu.cnm.deepdive.qod.service.SourceRepository;
+import edu.cnm.deepdive.qod.service.QuoteService;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.UUID;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,134 +29,93 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/quotes")
 @ExposesResourceFor(Quote.class)
+@Validated
 public class QuoteController {
 
-  private static final long MILLISECONDS_PER_DAY = 1000L * 60 * 60 * 24;
-
-  private final QuoteRepository quoteRepository;
-  private final SourceRepository sourceRepository;
+  private final QuoteService quoteService;
 
   @Autowired
-  public QuoteController(QuoteRepository quoteRepository, SourceRepository sourceRepository) {
-    this.quoteRepository = quoteRepository;
-    this.sourceRepository = sourceRepository;
+  public QuoteController(QuoteService quoteService) {
+    this.quoteService = quoteService;
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Quote> post(@RequestBody Quote quote) {
-    Source source = quote.getSource();
-    if (source != null) {
-      UUID id = source.getId();
-      if (id != null) {
-        source = sourceRepository.findOrFail(id);
-        quote.setSource(source);
-      }
-    }
-    quoteRepository.save(quote);
+  public ResponseEntity<Quote> post(@RequestBody @Valid Quote quote) {
+    quote = quoteService.create(quote);
     return ResponseEntity.created(quote.getHref()).body(quote);
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public Iterable<Quote> get() {
-    return quoteRepository.getAllByOrderByTextAsc();
+    return quoteService.readAll();
   }
 
   @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Iterable<Quote> search(@RequestParam("q") String fragment) {
-    if (fragment.length() < 3) {
-      throw new SearchTermTooShortException();
-    }
-    return quoteRepository.getAllByTextContainsOrderByTextAsc(fragment);
+  public Iterable<Quote> search(@RequestParam @Size(min = 3) String q) {
+    return quoteService.readFiltered(q);
   }
 
   @GetMapping(value = "/random", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote getRandom() {
-    return quoteRepository.getRandom().get();
+  public ResponseEntity<Quote> getRandom() {
+    return ResponseEntity.of(quoteService.readRandom());
   }
 
   @GetMapping(value = "/qod", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote getQuoteOfDay(
+  public ResponseEntity<Quote> getQuoteOfDay(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    long dayOffset = date.toEpochDay() % quoteRepository.getCount();
-    return quoteRepository.getQuoteOfDay(dayOffset).get();
+    return ResponseEntity.of(quoteService.readDaily(date));
   }
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote get(@PathVariable UUID id) {
-    return quoteRepository.findOrFail(id);
+  public ResponseEntity<Quote> get(@PathVariable UUID id) {
+    return ResponseEntity.of(quoteService.readOne(id));
   }
 
   @PutMapping(value = "/{id}",
       consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote put(@PathVariable UUID id, @RequestBody Quote modifiedQuote) {
-    Quote quote = quoteRepository.findOrFail(id);
-    quote.setText(modifiedQuote.getText());
-    Source source = modifiedQuote.getSource();
-    if (source != null) {
-      UUID sourceId = source.getId();
-      if (sourceId != null) {
-        source = sourceRepository.findOrFail(sourceId);
-      }
-    }
-    quote.setSource(source);
-    return quoteRepository.save(quote);
-  }
-
-  @PutMapping(value = "/{id}/text",
-      consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-  public String put(@PathVariable UUID id, @RequestBody String modifiedQuote) {
-    Quote quote = quoteRepository.findOrFail(id);
-    quote.setText(modifiedQuote);
-    quoteRepository.save(quote);
-    return quote.getText();
+  public ResponseEntity<Quote> put(@PathVariable UUID id, @RequestBody Quote quote) {
+    return ResponseEntity.of(quoteService.update(id, quote));
   }
 
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable UUID id) {
-    quoteRepository.findById(id).ifPresent(quoteRepository::delete);
+    quoteService.delete(id);
   }
 
-  @PutMapping(value = "/{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote attach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
-    Quote quote = quoteRepository.findOrFail(quoteId);
-    Source source = sourceRepository.findOrFail(sourceId);
-    if (!source.equals(quote.getSource())) {
-      quote.setSource(source);
-      quoteRepository.save(quote);
-    }
-    return quote;
+  @GetMapping(value = "/{id}/text", produces = MediaType.TEXT_PLAIN_VALUE)
+  public ResponseEntity<String> getText(@PathVariable UUID id) {
+    return ResponseEntity.of(quoteService.readOne(id).map(Quote::getText));
+  }
+
+  @PutMapping(value = "/{id}/text",
+      consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+  public ResponseEntity<String> putText(@PathVariable UUID id, @RequestBody @NotBlank String modifiedQuote) {
+    return ResponseEntity.of(quoteService.update(id, modifiedQuote));
+  }
+
+  @GetMapping(value = "/{id}/source", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Source> getAttribution(@PathVariable UUID id) {
+    return ResponseEntity.of(quoteService.readOne(id).map(Quote::getSource));
   }
 
   @PutMapping(value = "/{quoteId}/source",
       consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  public Quote attach(@PathVariable UUID quoteId, @RequestBody Source source) {
-    Quote quote = quoteRepository.findOrFail(quoteId);
-    source = sourceRepository.findOrFail(source.getId());
-    if (!source.equals(quote.getSource())) {
-      quote.setSource(source);
-      quoteRepository.save(quote);
-    }
-    return quote;
+  public ResponseEntity<Source> putAttribution(@PathVariable UUID quoteId, @RequestBody Source source) {
+    return ResponseEntity.of(quoteService.update(quoteId, source));
   }
 
-  @DeleteMapping(value = "/{quoteId}/source/{sourceId}")
-  public Quote detach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
-    Quote quote = quoteRepository.findOrFail(quoteId);
-    Source source = sourceRepository.findOrFail(sourceId);
-    if (source.equals(quote.getSource())) {
-      quote.setSource(null);
-      quoteRepository.save(quote);
-    }
-    return quote;
+  @PutMapping(value = "/{quoteId}/source",
+      consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+  public ResponseEntity<UUID> putAttribution(@PathVariable UUID quoteId, @RequestBody UUID sourceId) {
+    return ResponseEntity.of(quoteService.update(quoteId, sourceId).map(Source::getId));
   }
 
   @DeleteMapping(value = "/{quoteId}/source")
-  public Quote clearSource(@PathVariable UUID quoteId) {
-    Quote quote = quoteRepository.findOrFail(quoteId);
-    quote.setSource(null);
-    return quoteRepository.save(quote);
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void clearAttribution(@PathVariable UUID quoteId) {
+    quoteService.clearSource(quoteId);
   }
 
 }

@@ -1,6 +1,8 @@
 package edu.cnm.deepdive.qod.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import edu.cnm.deepdive.qod.view.FlatQuote;
 import edu.cnm.deepdive.qod.view.FlatSource;
@@ -21,6 +23,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.NotBlank;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -39,30 +42,33 @@ import org.springframework.stereotype.Component;
         @Index(columnList = "source_id, text", unique = true)
     }
 )
+@JsonIgnoreProperties(
+    value = {"id", "created", "updated", "href"},
+    allowGetters = true,
+    ignoreUnknown = true
+)
 public class Quote implements FlatQuote {
 
   private static EntityLinks entityLinks;
 
-  @NonNull
   @Id@GeneratedValue(generator = "uuid2")
   @GenericGenerator(name = "uuid2", strategy = "uuid2")
   @Column(name = "quote_id", columnDefinition = "CHAR(16) FOR BIT DATA",
       nullable = false, updatable = false)
   private UUID id;
 
-  @NonNull
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false, updatable = false)
   private Date created;
 
-  @NonNull
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false)
   private Date updated;
 
   @NonNull
+  @NotBlank
   @Column(length = 4096, nullable = false)
   private String text;
 
@@ -87,6 +93,7 @@ public class Quote implements FlatQuote {
     return updated;
   }
 
+  @NonNull
   @Override
   public String getText() {
     return text;
@@ -106,7 +113,7 @@ public class Quote implements FlatQuote {
 
   @Override
   public URI getHref() {
-    return entityLinks.linkForItemResource(Quote.class, id).toUri();
+    return (id != null) ? entityLinks.linkForItemResource(Quote.class, id).toUri() : null;
   }
 
   @Override
@@ -126,11 +133,13 @@ public class Quote implements FlatQuote {
     return result;
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @PostConstruct
   private void init() {
     entityLinks.toString();
   }
 
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   private void setEntityLinks(EntityLinks entityLinks) {
     Quote.entityLinks = entityLinks;

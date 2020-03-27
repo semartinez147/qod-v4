@@ -25,10 +25,14 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
+import org.springframework.security.web.csrf.InvalidCsrfTokenException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GoogleTokenService implements ResourceServerTokenServices {
+
+  private static final String VERIFICATION_FAILURE =
+      "Provided token could not be verified; check for stale credentials.";
 
   private final String clientId;
   private final AccessTokenConverter converter;
@@ -63,7 +67,7 @@ public class GoogleTokenService implements ResourceServerTokenServices {
       OAuth2Request request = converter.extractAuthentication(payload).getOAuth2Request();
       return new OAuth2Authentication(request, base);
     } else {
-      throw new BadCredentialsException(token);
+      throw new InvalidTokenException(VERIFICATION_FAILURE);
     }
   }
 
